@@ -1,0 +1,8 @@
+# Older duplicate of the app
+country_training (older copy).html
+# Personal data exports (the app only reads them through its own import)
+word-speed-trainer-data.json
+word-speed-trainer-*.json
+.claude/
+*.tmp
+~$*

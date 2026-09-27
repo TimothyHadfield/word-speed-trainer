@@ -1,0 +1,2613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Speed Trainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(100, 200, 255, 0.4);
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #c23152);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #533483, #3b1f6e);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(83, 52, 131, 0.4);
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Main Menu */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .menu-buttons button {
+            width: 280px;
+        }
+
+        /* Set Words Screen */
+        #set-words-screen textarea {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            padding: 15px;
+            resize: vertical;
+            font-family: 'Segoe UI', monospace;
+            line-height: 1.6;
+        }
+
+        #set-words-screen textarea:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .word-hint {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .save-row {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Training Screen */
+        #training-screen {
+            justify-content: flex-start;
+            padding-top: 60px;
+        }
+
+        .current-word-display {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 40px 0 10px;
+            text-shadow: 0 0 30px rgba(100, 200, 255, 0.6);
+            letter-spacing: 3px;
+            min-height: 70px;
+        }
+
+        .next-word-display {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+            min-height: 25px;
+        }
+
+        .next-word-display span {
+            color: #888;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        #typing-input {
+            width: 100%;
+            padding: 18px 25px;
+            font-size: 2rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.08);
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: white;
+            letter-spacing: 2px;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        #typing-input:focus {
+            outline: none;
+            border-color: #533483;
+        }
+
+        #typing-input.error {
+            border-color: #ff3333;
+            background: rgba(255, 0, 0, 0.15);
+        }
+
+        #typing-input.success {
+            border-color: #33ff77;
+            background: rgba(0, 255, 80, 0.15);
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 40px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat-box {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .stat-value.time {
+            color: #e94560;
+        }
+
+        .stat-value.best {
+            color: #33ff77;
+        }
+
+        .word-counter {
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .controls-hint {
+            margin-top: 25px;
+            color: #555;
+            font-size: 0.85rem;
+        }
+
+        .training-top-bar {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Auto Play Screen */
+        #autoplay-screen {
+            justify-content: flex-start;
+            padding-top: 40px;
+        }
+
+        .word-list-container {
+            width: 100%;
+            max-width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            margin: 15px 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .word-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .word-list-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .word-list-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .word-list-item {
+            padding: 10px 18px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.1s ease;
+        }
+
+        .word-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .word-list-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .word-list-item.selected {
+            background: rgba(233, 69, 96, 0.25);
+        }
+
+        .word-list-item .word-num {
+            color: #555;
+            font-size: 0.8rem;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .word-list-item .word-text {
+            color: #ccc;
+        }
+
+        .word-list-item.selected .word-text {
+            color: #fff;
+        }
+
+        .selection-info {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            min-height: 22px;
+        }
+
+        .drag-hint {
+            color: #555;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .list-name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .list-name-row label {
+            color: #ccc;
+            font-size: 0.95rem;
+        }
+
+        .list-name-row input {
+            padding: 8px 14px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: white;
+            width: 200px;
+        }
+
+        .list-name-row input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .word-list-item .word-best {
+            margin-left: auto;
+            color: #33ff77;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .record-comparison {
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            min-height: 40px;
+        }
+
+        .record-comparison .record-label {
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .record-comparison .record-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #33ff77;
+            margin-top: 4px;
+        }
+
+        .new-record-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #33ff77, #1db954);
+            color: #000;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        .saved-lists-section {
+            width: 100%;
+            max-width: 350px;
+            margin-bottom: 20px;
+        }
+
+        .saved-lists-section h3 {
+            font-size: 1.1rem;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .saved-list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .saved-list-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .saved-list-item .sl-name {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .saved-list-item .sl-detail {
+            color: #666;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .saved-list-item .sl-record {
+            color: #33ff77;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .saved-list-item .sl-delete {
+            margin-left: 10px;
+            background: none;
+            border: none;
+            color: #ff3333;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            opacity: 0.5;
+            transition: opacity 0.15s;
+        }
+
+        .saved-list-item .sl-delete:hover {
+            opacity: 1;
+        }
+
+        .save-list-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .save-list-row input {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: white;
+        }
+
+        .save-list-row input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .save-list-row button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .no-saved-lists {
+            color: #555;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .autoplay-word-display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 30px 0 10px;
+            text-shadow: 0 0 30px rgba(100, 200, 255, 0.6);
+            letter-spacing: 3px;
+            min-height: 60px;
+        }
+
+        .autoplay-next-word {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 25px;
+            min-height: 22px;
+        }
+
+        #autoplay-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 18px 25px;
+            font-size: 2rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.08);
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: white;
+            letter-spacing: 2px;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        #autoplay-input:focus {
+            outline: none;
+            border-color: #533483;
+        }
+
+        #autoplay-input.error {
+            border-color: #ff3333;
+            background: rgba(255, 0, 0, 0.15);
+        }
+
+        .autoplay-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .autoplay-progress {
+            margin-top: 15px;
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .autoplay-total-time {
+            margin-top: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e94560;
+            min-height: 30px;
+        }
+
+        .autoplay-result {
+            margin-top: 20px;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            display: none;
+        }
+
+        .autoplay-result h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #33ff77;
+        }
+
+        .autoplay-result .final-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #e94560;
+        }
+
+        .autoplay-result .final-detail {
+            color: #888;
+            margin-top: 8px;
+        }
+
+        /* Settings Bar */
+        .settings-bar {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 25px 20px;
+            z-index: 100;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .settings-bar.open {
+            right: 0;
+        }
+
+        .settings-bar h2 {
+            margin-bottom: 25px;
+        }
+
+        .settings-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 99;
+        }
+
+        .settings-overlay.open {
+            display: block;
+        }
+
+        .settings-gear {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 98;
+            transition: background 0.2s ease;
+            font-size: 1.3rem;
+            color: #aaa;
+            padding: 0;
+        }
+
+        .settings-gear:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-group label {
+            display: block;
+            color: #aaa;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .setting-group .setting-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .setting-group input[type="range"] {
+            flex: 1;
+            accent-color: #e94560;
+        }
+
+        .setting-group .setting-val {
+            color: #e94560;
+            font-weight: 700;
+            font-size: 1rem;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .settings-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .settings-close:hover {
+            color: white;
+        }
+
+        /* Stats Screen */
+        #stats-screen {
+            justify-content: flex-start;
+            padding-top: 40px;
+        }
+
+        .stats-toggle-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+            justify-content: center;
+            max-width: 720px;
+        }
+
+        .stats-toggle-btn {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .stats-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-toggle-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #fff;
+        }
+
+        .stats-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .canvas-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            white-space: nowrap;
+            display: none;
+            z-index: 10;
+        }
+
+        .stats-graph-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            align-items: flex-start;
+            max-width: 950px;
+            width: 100%;
+        }
+
+        .stats-canvas-wrapper {
+            position: relative;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        #stats-canvas, #stats-canvas-2 {
+            border-radius: 10px;
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .transition-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .transition-row input {
+            width: 70px;
+            padding: 6px 8px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: white;
+            text-align: center;
+        }
+
+        .transition-row input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .transition-unit {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .stats-side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 190px;
+            flex-shrink: 0;
+        }
+
+        .equation-box {
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .fit-toggle {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+            justify-content: center;
+        }
+
+        .fit-btn {
+            padding: 5px 14px;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #888;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .fit-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+        }
+
+        .fit-btn.active {
+            background: rgba(233, 69, 96, 0.3);
+            border-color: #e94560;
+            color: #fff;
+        }
+
+        .equation-line {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #ccc;
+            font-family: 'Segoe UI', monospace;
+        }
+
+        .equation-r2 {
+            font-size: 1.1rem;
+            color: #e94560;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .total-time-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .total-time-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #33ff77;
+            margin-top: 6px;
+        }
+
+        .per-char-stat {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .word-best-perchar {
+            color: #888;
+            font-size: 0.75rem;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- User Select Screen -->
+<div id="user-select-screen" class="screen active">
+    <h1>Word Speed Trainer</h1>
+    <h2 style="margin-bottom:10px">Select User</h2>
+    <div id="user-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;width:100%;max-width:350px"></div>
+    <div style="display:flex;gap:10px;align-items:center;width:100%;max-width:350px">
+        <input type="text" id="new-user-input" placeholder="New user name..." style="flex:1;padding:10px 14px;font-size:1rem;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;outline:none">
+        <button class="btn-primary" onclick="createUser()" style="padding:10px 20px">Create</button>
+    </div>
+</div>
+
+<!-- Main Menu -->
+<div id="menu-screen" class="screen">
+    <h1>Word Speed Trainer</h1>
+    <p id="menu-user-label" style="color:#4da6ff;margin-bottom:15px;font-size:1.1rem"></p>
+    <div class="menu-buttons">
+        <button class="btn-primary" onclick="showScreen('set-words-screen')">Set Words</button>
+        <button class="btn-secondary" onclick="startTraining()">Train</button>
+        <button class="btn-secondary" onclick="showStats()">Data</button>
+        <button class="btn-secondary" onclick="startAutoPlaySetup()">Auto Play</button>
+        <button class="btn-back" onclick="downloadData()" style="margin-top:10px">Download Data</button>
+        <button class="btn-back" onclick="switchUser()" style="margin-top:5px">Switch User</button>
+    </div>
+</div>
+
+<!-- Set Words Screen -->
+<div id="set-words-screen" class="screen">
+    <h2>Set Words</h2>
+    <p class="word-hint">Enter one word per line</p>
+    <textarea id="words-textarea" placeholder="Type your words here, one per line...&#10;&#10;Example:&#10;France&#10;Germany&#10;Spain&#10;Portugal"></textarea>
+    <div class="save-row">
+        <button class="btn-primary" onclick="saveWords()">Save</button>
+        <button class="btn-back" onclick="showScreen('menu-screen')">Back</button>
+    </div>
+</div>
+
+<!-- Training Screen -->
+<div id="training-screen" class="screen">
+    <div class="training-top-bar">
+        <button class="btn-back" onclick="showScreen('menu-screen')">Back</button>
+        <div class="word-counter" id="train-word-counter"></div>
+    </div>
+    <div class="current-word-display" id="train-current-word"></div>
+    <div class="next-word-display" id="train-next-word"></div>
+    <div class="input-wrapper">
+        <input type="text" id="typing-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
+    </div>
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-label">Last Time</div>
+            <div class="stat-value time" id="train-last-time">--</div>
+            <div class="per-char-stat" id="train-last-perchar"></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Best Time</div>
+            <div class="stat-value best" id="train-best-time">--</div>
+            <div class="per-char-stat" id="train-best-perchar"></div>
+        </div>
+    </div>
+    <div class="controls-hint">Press <strong>Enter</strong> to skip to next word</div>
+</div>
+
+<!-- Auto Play Setup/Play Screen -->
+<div id="autoplay-screen" class="screen">
+    <div class="training-top-bar">
+        <button class="btn-back" onclick="exitAutoPlay()">Back</button>
+        <div class="autoplay-progress" id="autoplay-progress"></div>
+    </div>
+
+    <div id="autoplay-setup">
+        <h2>Auto Play</h2>
+
+        <div class="saved-lists-section" id="saved-lists-section">
+            <h3>Saved Lists</h3>
+            <div id="saved-lists-container"></div>
+        </div>
+
+        <p class="drag-hint">Or click and drag to select a range of words</p>
+        <div class="word-list-container" id="word-list-container"></div>
+        <div class="selection-info" id="selection-info"></div>
+
+        <div class="save-list-row">
+            <input type="text" id="list-name-input" placeholder="List name..." autocomplete="off">
+            <button class="btn-secondary" onclick="saveCurrentList()">Save List</button>
+        </div>
+
+        <button class="btn-primary" onclick="beginAutoPlay()" style="margin-top:15px">Start</button>
+    </div>
+
+    <div id="autoplay-active" style="display:none; flex-direction:column; align-items:center;">
+        <div class="autoplay-word-display" id="autoplay-current-word"></div>
+        <div class="autoplay-next-word" id="autoplay-next-word"></div>
+        <input type="text" id="autoplay-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
+        <div class="autoplay-stats">
+            <div class="stat-box">
+                <div class="stat-label">Word Time</div>
+                <div class="stat-value time" id="autoplay-word-time">--</div>
+                <div class="per-char-stat" id="autoplay-word-time-perchar"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Best for Word</div>
+                <div class="stat-value best" id="autoplay-word-best">--</div>
+                <div class="per-char-stat" id="autoplay-word-best-perchar"></div>
+            </div>
+        </div>
+        <div class="autoplay-total-time" id="autoplay-total-time"></div>
+    </div>
+
+    <div class="autoplay-result" id="autoplay-result">
+        <h3>Completed!</h3>
+        <div class="final-time" id="autoplay-final-time"></div>
+        <div class="final-detail" id="autoplay-final-detail"></div>
+        <div id="autoplay-new-record"></div>
+        <div class="record-comparison" id="autoplay-record-comparison">
+            <div class="record-label">List Record</div>
+            <div class="record-value" id="autoplay-record-value">--</div>
+        </div>
+        <button class="btn-primary" style="margin-top:20px" onclick="exitAutoPlay()">Back to Menu</button>
+        <button class="btn-secondary" style="margin-top:10px" onclick="restartAutoPlay()">Retry</button>
+    </div>
+</div>
+
+<!-- Stats Screen -->
+<div id="stats-screen" class="screen">
+    <button class="btn-back" onclick="showScreen('menu-screen')" style="align-self:flex-start">Back</button>
+    <h2>Data</h2>
+    <div class="stats-toggle-bar" id="stats-toggle-bar"></div>
+    <div class="stats-graph-row">
+        <div class="stats-canvas-wrapper">
+            <canvas id="stats-canvas" width="700" height="450"></canvas>
+            <div class="canvas-tooltip" id="canvas-tooltip"></div>
+        </div>
+        <div class="stats-side-panel">
+            <div class="equation-box">
+                <div class="fit-toggle">
+                    <button class="fit-btn active" id="fit-linear-btn" onclick="setRegressionType('linear')">Linear</button>
+                    <button class="fit-btn" id="fit-quad-btn" onclick="setRegressionType('quadratic')">Quadratic</button>
+                </div>
+                <div class="equation-line" id="equation-text">y = 0x + 0</div>
+                <div class="equation-r2" id="equation-r2">R² = 0</div>
+            </div>
+            <div class="equation-box" id="total-time-box">
+                <div class="total-time-label">Total Best Time</div>
+                <div class="total-time-value" id="total-time-value">--</div>
+            </div>
+            <div class="equation-box">
+                <div class="total-time-label">Transitions</div>
+                <div class="transition-row">
+                    <input type="number" id="transition-time-input" value="300" min="0" step="50" oninput="updateTransitionTime()">
+                    <span class="transition-unit">ms</span>
+                </div>
+                <div class="total-time-value" id="transition-total-value" style="margin-top:8px">--</div>
+            </div>
+        </div>
+    </div>
+    <div class="stats-graph-row" style="margin-top:20px">
+        <div class="stats-canvas-wrapper">
+            <canvas id="stats-canvas-2" width="700" height="450"></canvas>
+            <div class="canvas-tooltip" id="canvas-tooltip-2"></div>
+        </div>
+        <div class="stats-side-panel">
+            <div class="equation-box">
+                <div class="fit-toggle">
+                    <button class="fit-btn active" id="fit-linear-btn-2" onclick="setRegressionType2('linear')">Linear</button>
+                    <button class="fit-btn" id="fit-quad-btn-2" onclick="setRegressionType2('quadratic')">Quadratic</button>
+                </div>
+                <div class="equation-line" id="equation-text-2">y = 0x + 0</div>
+                <div class="equation-r2" id="equation-r2-2">R² = 0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings -->
+<button class="settings-gear" onclick="toggleSettings()">&#9881;</button>
+<div class="settings-overlay" id="settings-overlay" onclick="toggleSettings()"></div>
+<div class="settings-bar" id="settings-bar">
+    <button class="settings-close" onclick="toggleSettings()">&times;</button>
+    <h2>Settings</h2>
+    <div class="setting-group">
+        <label>Error Delay</label>
+        <div class="setting-row">
+            <input type="range" id="error-delay-slider" min="0" max="5000" step="100" value="1000" oninput="updateErrorDelay(this.value)">
+            <span class="setting-val" id="error-delay-val">1.0s</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============ STATE ============
+    const DEFAULT_WORDS = ["car","prc","fsm","ksa","png","nz","dr","dprk","rok","roc","usa","uae","uk","congo","canada","mexico","guatemala","belize","el salvador","honduras","nicaragua","costa rica","panama","colombia","venezuela","brazil","peru","ecuador","bolivia","paraguay","uraguay","chile","argentina","cuba","jamaica","bahamas","haiti","st lucia","st vincent","st kitts","grenada","dominica","barbados","antigua","trinidad","ireland","iceland","portugal","spain","france","netherlands","belgium","germany","luxemburg","litchtenstein","denmark","poland","belarus","norway","sweden","finland","estonia","latvia","lithuania","ukraine","moldova","romania","greece","macedonia","kosovo","albania","montenegro","serbia","bosnia","croatia","slovenia","slovakia","austria","hungary","czech republic","switzerland","italy","andorra","monaco","malta","cyprus","vatican","san marino"];
+    const DEFAULT_SAVED_LISTS = [{"name":"Acronyms","start":0,"end":13},{"name":"America's","start":14,"end":32},{"name":"American islands","start":33,"end":44},{"name":"Europe","start":45,"end":87}];
+
+    let currentUser = null; // set on login
+    let words = [...DEFAULT_WORDS];
+    let bestTimes = {}; // word -> best time in ms
+    let listRecords = {}; // listName -> best total time in ms
+    let savedLists = [...DEFAULT_SAVED_LISTS];
+    let errorDelay = 1000; // ms
+
+    // Training state
+    let trainIndex = 0;
+    let trainStartTime = null;
+    let trainLocked = false;
+
+    // Autoplay state
+    let autoPlayWords = [];
+    let autoPlayIndex = 0;
+    let autoPlayStartTime = null;      // per-word
+    let autoPlayGlobalStart = null;    // total run
+    let autoPlayLocked = false;
+    let autoPlayRunning = false;
+    let autoPlayRangeStart = 0;
+    let autoPlayRangeEnd = 0;
+    let currentListName = '';
+
+    // ============ PERSISTENCE ============
+    function userKey(key) {
+        return 'wordSpeedTrainer_' + currentUser + '_' + key;
+    }
+
+    function loadData() {
+        const saved = localStorage.getItem(userKey('words'));
+        if (saved) {
+            words = JSON.parse(saved);
+        } else {
+            words = [...DEFAULT_WORDS];
+        }
+        const savedBest = localStorage.getItem(userKey('bestTimes'));
+        if (savedBest) {
+            bestTimes = JSON.parse(savedBest);
+        } else {
+            bestTimes = {};
+        }
+        const savedRecords = localStorage.getItem(userKey('listRecords'));
+        if (savedRecords) {
+            listRecords = JSON.parse(savedRecords);
+        } else {
+            listRecords = {};
+        }
+        const savedListsData = localStorage.getItem(userKey('savedLists'));
+        if (savedListsData) {
+            savedLists = JSON.parse(savedListsData);
+        } else {
+            savedLists = [...DEFAULT_SAVED_LISTS];
+        }
+        const savedErrorDelay = localStorage.getItem(userKey('errorDelay'));
+        if (savedErrorDelay !== null) {
+            errorDelay = parseInt(savedErrorDelay);
+        } else {
+            errorDelay = 1000;
+        }
+        // First launch for this user: persist defaults
+        if (!saved) saveData();
+        // Sync slider
+        document.getElementById('error-delay-slider').value = errorDelay;
+        document.getElementById('error-delay-val').textContent = (errorDelay / 1000).toFixed(1) + 's';
+    }
+
+    function saveData() {
+        localStorage.setItem(userKey('words'), JSON.stringify(words));
+        localStorage.setItem(userKey('bestTimes'), JSON.stringify(bestTimes));
+        localStorage.setItem(userKey('listRecords'), JSON.stringify(listRecords));
+        localStorage.setItem(userKey('savedLists'), JSON.stringify(savedLists));
+        localStorage.setItem(userKey('errorDelay'), errorDelay);
+    }
+
+    // ============ USER MANAGEMENT ============
+    function getUsers() {
+        const raw = localStorage.getItem('wordSpeedTrainer_users');
+        return raw ? JSON.parse(raw) : [];
+    }
+
+    function saveUsers(users) {
+        localStorage.setItem('wordSpeedTrainer_users', JSON.stringify(users));
+    }
+
+    function renderUserList() {
+        const container = document.getElementById('user-list');
+        const users = getUsers();
+        container.innerHTML = '';
+        users.forEach(function(name) {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:8px;align-items:center';
+            const btn = document.createElement('button');
+            btn.className = 'btn-secondary';
+            btn.style.cssText = 'flex:1;text-align:left;padding:10px 16px';
+            btn.textContent = name;
+            btn.addEventListener('click', function() { loginUser(name); });
+            const ren = document.createElement('button');
+            ren.className = 'btn-back';
+            ren.style.cssText = 'padding:10px 14px;font-size:0.85rem';
+            ren.textContent = '\u270E';
+            ren.title = 'Rename user';
+            ren.addEventListener('click', function(e) { e.stopPropagation(); renameUser(name); });
+            const del = document.createElement('button');
+            del.className = 'btn-back';
+            del.style.cssText = 'padding:10px 14px;font-size:1rem';
+            del.textContent = '\u00d7';
+            del.title = 'Delete user';
+            del.addEventListener('click', function(e) { e.stopPropagation(); deleteUser(name); });
+            row.appendChild(btn);
+            row.appendChild(ren);
+            row.appendChild(del);
+            container.appendChild(row);
+        });
+        if (users.length === 0) {
+            container.innerHTML = '<p style="color:#888;text-align:center">No users yet. Create one below.</p>';
+        }
+    }
+
+    function createUser() {
+        const input = document.getElementById('new-user-input');
+        const name = input.value.trim();
+        if (!name) return;
+        const users = getUsers();
+        if (users.includes(name)) {
+            alert('User "' + name + '" already exists.');
+            return;
+        }
+        users.push(name);
+        saveUsers(users);
+        input.value = '';
+        loginUser(name);
+    }
+
+    function deleteUser(name) {
+        if (!confirm('Delete user "' + name + '" and all their data?')) return;
+        let users = getUsers();
+        users = users.filter(function(u) { return u !== name; });
+        saveUsers(users);
+        // Remove this user's data from localStorage
+        ['words', 'bestTimes', 'listRecords', 'savedLists', 'errorDelay'].forEach(function(key) {
+            localStorage.removeItem('wordSpeedTrainer_' + name + '_' + key);
+        });
+        renderUserList();
+    }
+
+    function renameUser(oldName) {
+        const newName = prompt('Rename "' + oldName + '" to:', oldName);
+        if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+        const trimmed = newName.trim();
+        const users = getUsers();
+        if (users.includes(trimmed)) {
+            alert('User "' + trimmed + '" already exists.');
+            return;
+        }
+        // Move localStorage data to new key prefix
+        const dataKeys = ['words', 'bestTimes', 'listRecords', 'savedLists', 'errorDelay'];
+        dataKeys.forEach(function(key) {
+            const val = localStorage.getItem('wordSpeedTrainer_' + oldName + '_' + key);
+            if (val !== null) {
+                localStorage.setItem('wordSpeedTrainer_' + trimmed + '_' + key, val);
+                localStorage.removeItem('wordSpeedTrainer_' + oldName + '_' + key);
+            }
+        });
+        // Update user list
+        const idx = users.indexOf(oldName);
+        users[idx] = trimmed;
+        saveUsers(users);
+        // Update last user if it was this one
+        if (localStorage.getItem('wordSpeedTrainer_lastUser') === oldName) {
+            localStorage.setItem('wordSpeedTrainer_lastUser', trimmed);
+        }
+        // If currently logged in as this user, update
+        if (currentUser === oldName) {
+            currentUser = trimmed;
+            document.getElementById('menu-user-label').textContent = 'Logged in as: ' + trimmed;
+        }
+        renderUserList();
+    }
+
+    function loginUser(name) {
+        currentUser = name;
+        localStorage.setItem('wordSpeedTrainer_lastUser', name);
+        loadData();
+        document.getElementById('menu-user-label').textContent = 'Logged in as: ' + name;
+        showScreen('menu-screen');
+    }
+
+    function switchUser() {
+        currentUser = null;
+        renderUserList();
+        showScreen('user-select-screen');
+    }
+
+    // Migrate old data (from before user system) into a "Default" user
+    function migrateOldData() {
+        const oldWords = localStorage.getItem('wordSpeedTrainer_words');
+        if (oldWords) {
+            // Old data exists — migrate to "Default" user
+            const users = getUsers();
+            if (!users.includes('Default')) {
+                users.push('Default');
+                saveUsers(users);
+            }
+            ['words', 'bestTimes', 'listRecords', 'savedLists', 'errorDelay'].forEach(function(key) {
+                const val = localStorage.getItem('wordSpeedTrainer_' + key);
+                if (val !== null) {
+                    localStorage.setItem('wordSpeedTrainer_Default_' + key, val);
+                    localStorage.removeItem('wordSpeedTrainer_' + key);
+                }
+            });
+        }
+    }
+
+    // ============ SCREENS ============
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+
+        if (id === 'set-words-screen') {
+            document.getElementById('words-textarea').value = words.join('\n');
+        }
+    }
+
+    function saveWords() {
+        const raw = document.getElementById('words-textarea').value;
+        words = raw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        saveData();
+        showScreen('menu-screen');
+    }
+
+    // ============ TRAINING MODE ============
+    function startTraining() {
+        if (words.length === 0) {
+            alert('No words set! Go to "Set Words" first.');
+            return;
+        }
+        cameFromStats = false;
+        trainIndex = 0;
+        trainStartTime = null;
+        trainLocked = false;
+        showScreen('training-screen');
+        updateTrainDisplay();
+        const input = document.getElementById('typing-input');
+        input.value = '';
+        input.className = '';
+        input.focus();
+    }
+
+    function updateTrainDisplay() {
+        const wordEl = document.getElementById('train-current-word');
+        const nextEl = document.getElementById('train-next-word');
+        const counterEl = document.getElementById('train-word-counter');
+
+        wordEl.textContent = words[trainIndex];
+        if (trainIndex + 1 < words.length) {
+            nextEl.innerHTML = 'Next: <span>' + escapeHtml(words[trainIndex + 1]) + '</span>';
+        } else {
+            nextEl.innerHTML = '<span>Last word!</span>';
+        }
+        counterEl.textContent = (trainIndex + 1) + ' / ' + words.length;
+
+        // Show best time for current word
+        const bestEl = document.getElementById('train-best-time');
+        const bestPerCharEl = document.getElementById('train-best-perchar');
+        const key = words[trainIndex].toLowerCase();
+        if (bestTimes[key]) {
+            bestEl.textContent = formatTime(bestTimes[key]);
+            bestPerCharEl.textContent = formatPerChar(bestTimes[key], words[trainIndex]);
+        } else {
+            bestEl.textContent = '--';
+            bestPerCharEl.textContent = '';
+        }
+    }
+
+    document.getElementById('typing-input').addEventListener('keydown', function(e) {
+        if (trainLocked) {
+            e.preventDefault();
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            cameFromStats = false;
+            // Move to next word
+            if (trainIndex < words.length - 1) {
+                trainIndex++;
+                trainStartTime = null;
+                this.value = '';
+                this.className = '';
+                document.getElementById('train-last-time').textContent = '--';
+                document.getElementById('train-last-perchar').textContent = '';
+                updateTrainDisplay();
+            }
+            return;
+        }
+    });
+
+    document.getElementById('typing-input').addEventListener('input', function(e) {
+        if (trainLocked) {
+            this.value = '';
+            return;
+        }
+
+        const typed = this.value;
+        const target = words[trainIndex];
+
+        // Start timer on first character
+        if (typed.length === 1 && trainStartTime === null) {
+            trainStartTime = performance.now();
+        }
+
+        if (typed.length === 0) return;
+
+        // Check if current input matches the target so far (case-insensitive)
+        const targetSoFar = target.substring(0, typed.length).toLowerCase();
+        const typedLower = typed.toLowerCase();
+
+        if (typedLower !== targetSoFar) {
+            // Wrong letter
+            trainLocked = true;
+            this.className = 'error';
+            setTimeout(() => {
+                this.value = '';
+                this.className = '';
+                trainStartTime = null;
+                trainLocked = false;
+                this.focus();
+            }, errorDelay);
+            return;
+        }
+
+        // Check if word is complete
+        if (typed.length === target.length && typedLower === target.toLowerCase()) {
+            const elapsed = performance.now() - trainStartTime;
+            trainLocked = true;
+            this.className = 'success';
+
+            // Update last time
+            document.getElementById('train-last-time').textContent = formatTime(elapsed);
+            document.getElementById('train-last-perchar').textContent = formatPerChar(elapsed, target);
+
+            // Update best time
+            const key = target.toLowerCase();
+            if (!bestTimes[key] || elapsed < bestTimes[key]) {
+                bestTimes[key] = elapsed;
+                saveData();
+            }
+            document.getElementById('train-best-time').textContent = formatTime(bestTimes[key]);
+            document.getElementById('train-best-perchar').textContent = formatPerChar(bestTimes[key], target);
+
+            setTimeout(() => {
+                this.value = '';
+                this.className = '';
+                trainStartTime = null;
+                trainLocked = false;
+                this.focus();
+            }, 1000);
+        }
+    });
+
+    // ============ AUTO PLAY MODE ============
+    let selStart = -1;
+    let selEnd = -1;
+    let isDragging = false;
+    let dragAnchor = -1;
+
+    function startAutoPlaySetup() {
+        if (words.length === 0) {
+            alert('No words set! Go to "Set Words" first.');
+            return;
+        }
+        showScreen('autoplay-screen');
+        document.getElementById('autoplay-setup').style.display = '';
+        document.getElementById('autoplay-active').style.display = 'none';
+        document.getElementById('autoplay-result').style.display = 'none';
+        document.getElementById('list-name-input').value = '';
+        autoPlayRunning = false;
+        buildWordList();
+        renderSavedLists();
+    }
+
+    function renderSavedLists() {
+        const container = document.getElementById('saved-lists-container');
+        container.innerHTML = '';
+        if (savedLists.length === 0) {
+            container.innerHTML = '<div class="no-saved-lists">No saved lists yet</div>';
+            return;
+        }
+        savedLists.forEach((list, i) => {
+            const item = document.createElement('div');
+            item.className = 'saved-list-item';
+            const recordStr = listRecords[list.name] ? formatTime(listRecords[list.name]) : '';
+            item.innerHTML =
+                '<span class="sl-name">' + escapeHtml(list.name) + '</span>' +
+                '<span class="sl-detail">#' + (list.start + 1) + '-' + (list.end + 1) + '</span>' +
+                (recordStr ? '<span class="sl-record">' + recordStr + '</span>' : '') +
+                '<button class="sl-delete" title="Delete list">&times;</button>';
+            item.querySelector('.sl-delete').addEventListener('click', function(e) {
+                e.stopPropagation();
+                deleteSavedList(i);
+            });
+            item.addEventListener('click', function() {
+                loadSavedList(i);
+            });
+            container.appendChild(item);
+        });
+    }
+
+    function saveCurrentList() {
+        const name = document.getElementById('list-name-input').value.trim();
+        if (!name) {
+            alert('Enter a name for the list first.');
+            return;
+        }
+        // Check for duplicate name
+        const existing = savedLists.findIndex(l => l.name === name);
+        if (existing >= 0) {
+            savedLists[existing] = { name, start: selStart, end: selEnd };
+        } else {
+            savedLists.push({ name, start: selStart, end: selEnd });
+        }
+        saveData();
+        renderSavedLists();
+    }
+
+    function loadSavedList(index) {
+        const list = savedLists[index];
+        // Clamp to current word count
+        selStart = Math.min(list.start, words.length - 1);
+        selEnd = Math.min(list.end, words.length - 1);
+        document.getElementById('list-name-input').value = list.name;
+        updateWordListSelection();
+        // Scroll the first selected word into view
+        const items = document.querySelectorAll('.word-list-item');
+        if (items[selStart]) {
+            items[selStart].scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+    }
+
+    function deleteSavedList(index) {
+        const name = savedLists[index].name;
+        savedLists.splice(index, 1);
+        // Also remove its record
+        delete listRecords[name];
+        saveData();
+        renderSavedLists();
+    }
+
+    function buildWordList() {
+        const container = document.getElementById('word-list-container');
+        container.innerHTML = '';
+        selStart = 0;
+        selEnd = Math.min(words.length - 1, 19);
+
+        words.forEach((word, i) => {
+            const item = document.createElement('div');
+            item.className = 'word-list-item';
+            item.dataset.index = i;
+            const key = word.toLowerCase();
+            const bestStr = bestTimes[key] ? formatTime(bestTimes[key]) : '';
+            const perCharStr = bestTimes[key] ? '<span class="word-best-perchar">' + formatPerChar(bestTimes[key], word) + '</span>' : '';
+            item.innerHTML = '<span class="word-num">' + (i + 1) + '</span><span class="word-text">' + escapeHtml(word) + '</span>' + (bestStr ? '<span class="word-best">' + bestStr + perCharStr + '</span>' : '');
+            container.appendChild(item);
+        });
+
+        updateWordListSelection();
+
+        // Mouse events for drag selection
+        container.addEventListener('mousedown', function(e) {
+            const item = e.target.closest('.word-list-item');
+            if (!item) return;
+            e.preventDefault();
+            const idx = parseInt(item.dataset.index);
+            dragAnchor = idx;
+            selStart = idx;
+            selEnd = idx;
+            isDragging = true;
+            updateWordListSelection();
+        });
+
+        container.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            const item = e.target.closest('.word-list-item');
+            if (!item) return;
+            const idx = parseInt(item.dataset.index);
+            selStart = Math.min(dragAnchor, idx);
+            selEnd = Math.max(dragAnchor, idx);
+            updateWordListSelection();
+        });
+
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+
+        // Touch events for mobile drag selection
+        container.addEventListener('touchstart', function(e) {
+            const item = e.target.closest('.word-list-item');
+            if (!item) return;
+            const idx = parseInt(item.dataset.index);
+            dragAnchor = idx;
+            selStart = idx;
+            selEnd = idx;
+            isDragging = true;
+            updateWordListSelection();
+        }, { passive: true });
+
+        container.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!el) return;
+            const item = el.closest('.word-list-item');
+            if (!item) return;
+            const idx = parseInt(item.dataset.index);
+            selStart = Math.min(dragAnchor, idx);
+            selEnd = Math.max(dragAnchor, idx);
+            updateWordListSelection();
+        }, { passive: true });
+
+        document.addEventListener('touchend', function() {
+            isDragging = false;
+        });
+    }
+
+    function updateWordListSelection() {
+        const items = document.querySelectorAll('.word-list-item');
+        items.forEach((item, i) => {
+            if (i >= selStart && i <= selEnd) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+        const count = selEnd - selStart + 1;
+        document.getElementById('selection-info').textContent =
+            count + ' word' + (count !== 1 ? 's' : '') + ' selected (#' + (selStart + 1) + ' - #' + (selEnd + 1) + ')';
+    }
+
+    function beginAutoPlay() {
+        if (selStart < 0 || selEnd < 0) return;
+
+        currentListName = document.getElementById('list-name-input').value.trim();
+        if (!currentListName) {
+            currentListName = 'Words ' + (selStart + 1) + '-' + (selEnd + 1);
+            document.getElementById('list-name-input').value = currentListName;
+        }
+
+        autoPlayRangeStart = selStart + 1;
+        autoPlayRangeEnd = selEnd + 1;
+        autoPlayWords = words.slice(selStart, selEnd + 1);
+        autoPlayIndex = 0;
+        autoPlayStartTime = null;
+        autoPlayGlobalStart = null;
+        autoPlayLocked = false;
+        autoPlayRunning = true;
+
+        document.getElementById('autoplay-setup').style.display = 'none';
+        document.getElementById('autoplay-active').style.display = 'flex';
+        document.getElementById('autoplay-result').style.display = 'none';
+        document.getElementById('autoplay-total-time').textContent = '';
+        document.getElementById('autoplay-word-time').textContent = '--';
+        document.getElementById('autoplay-word-time-perchar').textContent = '';
+        document.getElementById('autoplay-word-best').textContent = '--';
+        document.getElementById('autoplay-word-best-perchar').textContent = '';
+
+        updateAutoPlayDisplay();
+        const input = document.getElementById('autoplay-input');
+        input.value = '';
+        input.className = '';
+        input.focus();
+    }
+
+    function updateAutoPlayDisplay() {
+        const wordEl = document.getElementById('autoplay-current-word');
+        const nextEl = document.getElementById('autoplay-next-word');
+        const progEl = document.getElementById('autoplay-progress');
+
+        wordEl.textContent = autoPlayWords[autoPlayIndex];
+        if (autoPlayIndex + 1 < autoPlayWords.length) {
+            nextEl.innerHTML = 'Next: <span>' + escapeHtml(autoPlayWords[autoPlayIndex + 1]) + '</span>';
+        } else {
+            nextEl.innerHTML = '<span>Last word!</span>';
+        }
+        progEl.textContent = (autoPlayIndex + 1) + ' / ' + autoPlayWords.length;
+
+        // Show best for this word
+        const key = autoPlayWords[autoPlayIndex].toLowerCase();
+        const bestEl = document.getElementById('autoplay-word-best');
+        const bestPerCharEl = document.getElementById('autoplay-word-best-perchar');
+        if (bestTimes[key]) {
+            bestEl.textContent = formatTime(bestTimes[key]);
+            bestPerCharEl.textContent = formatPerChar(bestTimes[key], autoPlayWords[autoPlayIndex]);
+        } else {
+            bestEl.textContent = '--';
+            bestPerCharEl.textContent = '';
+        }
+    }
+
+    document.getElementById('autoplay-input').addEventListener('input', function(e) {
+        if (autoPlayLocked || !autoPlayRunning) {
+            this.value = '';
+            return;
+        }
+
+        const typed = this.value;
+        const target = autoPlayWords[autoPlayIndex];
+
+        // Start timers on first character of first word
+        if (typed.length === 1) {
+            if (autoPlayStartTime === null) {
+                autoPlayStartTime = performance.now();
+            }
+            if (autoPlayGlobalStart === null) {
+                autoPlayGlobalStart = performance.now();
+            }
+        }
+
+        if (typed.length === 0) return;
+
+        // Check match so far
+        const targetSoFar = target.substring(0, typed.length).toLowerCase();
+        const typedLower = typed.toLowerCase();
+
+        if (typedLower !== targetSoFar) {
+            // Wrong letter - red for 2 seconds, reset
+            autoPlayLocked = true;
+            this.className = 'error';
+            setTimeout(() => {
+                this.value = '';
+                this.className = '';
+                autoPlayStartTime = null; // reset per-word timer
+                autoPlayLocked = false;
+                this.focus();
+            }, errorDelay);
+            return;
+        }
+
+        // Check if word complete
+        if (typed.length === target.length && typedLower === target.toLowerCase()) {
+            const wordTime = performance.now() - autoPlayStartTime;
+
+            // Update word time display
+            document.getElementById('autoplay-word-time').textContent = formatTime(wordTime);
+            document.getElementById('autoplay-word-time-perchar').textContent = formatPerChar(wordTime, target);
+
+            // Update best time
+            const key = target.toLowerCase();
+            if (!bestTimes[key] || wordTime < bestTimes[key]) {
+                bestTimes[key] = wordTime;
+                saveData();
+            }
+            document.getElementById('autoplay-word-best').textContent = formatTime(bestTimes[key]);
+            document.getElementById('autoplay-word-best-perchar').textContent = formatPerChar(bestTimes[key], target);
+
+            // Move to next word immediately (no green delay in autoplay)
+            autoPlayIndex++;
+            autoPlayStartTime = null;
+
+            if (autoPlayIndex >= autoPlayWords.length) {
+                // Done!
+                const totalTime = performance.now() - autoPlayGlobalStart;
+                autoPlayRunning = false;
+                this.value = '';
+                this.className = '';
+                showAutoPlayResult(totalTime);
+            } else {
+                this.value = '';
+                this.className = '';
+                updateAutoPlayDisplay();
+                this.focus();
+            }
+        }
+    });
+
+    // Prevent Enter from doing anything in autoplay
+    document.getElementById('autoplay-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+        if (autoPlayLocked) {
+            e.preventDefault();
+        }
+    });
+
+    function showAutoPlayResult(totalTime) {
+        document.getElementById('autoplay-setup').style.display = 'none';
+        document.getElementById('autoplay-active').style.display = 'none';
+        const result = document.getElementById('autoplay-result');
+        result.style.display = 'block';
+        document.getElementById('autoplay-final-time').textContent = formatTime(totalTime);
+        document.getElementById('autoplay-final-detail').textContent =
+            '"' + currentListName + '" - ' + autoPlayWords.length + ' words';
+
+        // Check/update list record
+        const prevRecord = listRecords[currentListName];
+        const newRecordEl = document.getElementById('autoplay-new-record');
+        const recordValueEl = document.getElementById('autoplay-record-value');
+
+        if (!prevRecord || totalTime < prevRecord) {
+            listRecords[currentListName] = totalTime;
+            saveData();
+            if (prevRecord) {
+                newRecordEl.innerHTML = '<span class="new-record-badge">NEW RECORD!</span><br><span style="color:#888;font-size:0.9rem;margin-top:6px;display:inline-block;">Previous: ' + formatTime(prevRecord) + '</span>';
+            } else {
+                newRecordEl.innerHTML = '<span class="new-record-badge">FIRST RECORD SET!</span>';
+            }
+            recordValueEl.textContent = formatTime(totalTime);
+        } else {
+            newRecordEl.innerHTML = '';
+            recordValueEl.textContent = formatTime(prevRecord);
+        }
+    }
+
+    function restartAutoPlay() {
+        beginAutoPlay();
+    }
+
+    function exitAutoPlay() {
+        autoPlayRunning = false;
+        showScreen('menu-screen');
+    }
+
+    // ============ DOWNLOAD DATA ============
+    function downloadData() {
+        const data = {
+            user: currentUser,
+            words: words,
+            bestTimes: bestTimes,
+            savedLists: savedLists,
+            listRecords: listRecords,
+            errorDelay: errorDelay
+        };
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'word-speed-trainer-' + currentUser + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ============ UTILS ============
+    function formatTime(ms) {
+        if (ms < 1000) {
+            return ms.toFixed(0) + 'ms';
+        }
+        return (ms / 1000).toFixed(2) + 's';
+    }
+
+    function formatTimeMinSec(ms) {
+        const totalSec = ms / 1000;
+        if (totalSec < 60) {
+            return totalSec.toFixed(2) + 's';
+        }
+        const min = Math.floor(totalSec / 60);
+        const sec = (totalSec % 60).toFixed(2);
+        return min + 'm ' + sec + 's';
+    }
+
+    function formatPerChar(ms, word) {
+        const chars = word.length;
+        if (chars === 0) return '';
+        const perChar = ms / chars;
+        if (perChar < 1000) {
+            return perChar.toFixed(0) + 'ms/ch';
+        }
+        return (perChar / 1000).toFixed(2) + 's/ch';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ============ SETTINGS ============
+    function toggleSettings() {
+        document.getElementById('settings-bar').classList.toggle('open');
+        document.getElementById('settings-overlay').classList.toggle('open');
+    }
+
+    function updateErrorDelay(val) {
+        errorDelay = parseInt(val);
+        document.getElementById('error-delay-val').textContent = (errorDelay / 1000).toFixed(1) + 's';
+        saveData();
+    }
+
+    // ============ TRAIN SPECIFIC WORD ============
+    let cameFromStats = false;
+
+    function trainSpecificWord(index) {
+        if (words.length === 0) return;
+        cameFromStats = true;
+        trainIndex = index;
+        trainStartTime = null;
+        trainLocked = false;
+        showScreen('training-screen');
+        updateTrainDisplay();
+        const input = document.getElementById('typing-input');
+        input.value = '';
+        input.className = '';
+        document.getElementById('train-last-time').textContent = '--';
+        document.getElementById('train-last-perchar').textContent = '';
+        input.focus();
+    }
+
+    // ============ STATISTICS SCREEN ============
+    const LIST_COLORS = ['#e94560', '#4da6ff', '#33ff77', '#ff9933', '#cc66ff', '#ffff66', '#66ffff', '#ff66b2'];
+    let statsActiveToggles = new Set(); // 'all' or list indices
+    let regressionType = 'linear'; // 'linear' or 'quadratic'
+    let scatterDots = []; // {x, y, px, py, word, wordIndex, color} - px/py = pixel coords
+    let hoveredDot = null;
+
+    function updateTransitionTime() {
+        drawScatterPlot();
+        drawScatterPlot2();
+    }
+
+    function setRegressionType(type) {
+        regressionType = type;
+        document.getElementById('fit-linear-btn').classList.toggle('active', type === 'linear');
+        document.getElementById('fit-quad-btn').classList.toggle('active', type === 'quadratic');
+        drawScatterPlot();
+    }
+
+    function showStats() {
+        statsActiveToggles = new Set(['all']);
+        showScreen('stats-screen');
+        buildStatsToggles();
+        drawScatterPlot();
+        drawScatterPlot2();
+    }
+
+    function buildStatsToggles() {
+        const bar = document.getElementById('stats-toggle-bar');
+        bar.innerHTML = '';
+
+        // "All" button
+        const allBtn = document.createElement('button');
+        allBtn.className = 'stats-toggle-btn' + (statsActiveToggles.has('all') ? ' active' : '');
+        allBtn.textContent = 'All';
+        allBtn.addEventListener('click', function() {
+            statsActiveToggles = new Set(['all']);
+            buildStatsToggles();
+            drawScatterPlot();
+            drawScatterPlot2();
+        });
+        bar.appendChild(allBtn);
+
+        // Per-list buttons
+        savedLists.forEach((list, i) => {
+            const btn = document.createElement('button');
+            const color = LIST_COLORS[i % LIST_COLORS.length];
+            btn.className = 'stats-toggle-btn' + (statsActiveToggles.has(i) ? ' active' : '');
+            btn.innerHTML = '<span class="stats-color-dot" style="background:' + color + '"></span>' + escapeHtml(list.name);
+            btn.addEventListener('click', function() {
+                statsActiveToggles.delete('all');
+                if (statsActiveToggles.has(i)) {
+                    statsActiveToggles.delete(i);
+                } else {
+                    statsActiveToggles.add(i);
+                }
+                // If nothing selected, go back to all
+                if (statsActiveToggles.size === 0) {
+                    statsActiveToggles.add('all');
+                }
+                buildStatsToggles();
+                drawScatterPlot();
+                drawScatterPlot2();
+            });
+            bar.appendChild(btn);
+        });
+    }
+
+    function getWordListColor(wordIndex) {
+        // Returns the color for a word based on which saved list it belongs to (first match)
+        for (let i = 0; i < savedLists.length; i++) {
+            const list = savedLists[i];
+            if (wordIndex >= list.start && wordIndex <= list.end) {
+                return LIST_COLORS[i % LIST_COLORS.length];
+            }
+        }
+        return null;
+    }
+
+    function getWordListIndices(wordIndex) {
+        // Returns array of list indices this word belongs to
+        const indices = [];
+        for (let i = 0; i < savedLists.length; i++) {
+            const list = savedLists[i];
+            if (wordIndex >= list.start && wordIndex <= list.end) {
+                indices.push(i);
+            }
+        }
+        return indices;
+    }
+
+    function drawScatterPlot() {
+        const canvas = document.getElementById('stats-canvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        const pad = { top: 30, right: 30, bottom: 50, left: 70 };
+        const plotW = W - pad.left - pad.right;
+        const plotH = H - pad.top - pad.bottom;
+
+        // Clear
+        ctx.fillStyle = '#0f1524';
+        ctx.fillRect(0, 0, W, H);
+
+        // Gather data points
+        scatterDots = [];
+        const showAll = statsActiveToggles.has('all');
+
+        words.forEach((word, i) => {
+            const key = word.toLowerCase();
+            if (!bestTimes[key]) return;
+
+            const charCount = word.length;
+            const perChar = bestTimes[key] / charCount;
+            const listIndices = getWordListIndices(i);
+
+            let color = null;
+            let show = false;
+
+            if (showAll) {
+                show = true;
+                // Color by first list membership, or white
+                if (listIndices.length > 0) {
+                    color = LIST_COLORS[listIndices[0] % LIST_COLORS.length];
+                } else {
+                    color = '#ffffff';
+                }
+            } else {
+                // Only show if word belongs to an active list
+                for (const li of listIndices) {
+                    if (statsActiveToggles.has(li)) {
+                        show = true;
+                        color = LIST_COLORS[li % LIST_COLORS.length];
+                        break;
+                    }
+                }
+            }
+
+            if (show) {
+                scatterDots.push({
+                    x: charCount,
+                    y: perChar,
+                    word: word,
+                    wordIndex: i,
+                    color: color
+                });
+            }
+        });
+
+        if (scatterDots.length === 0) {
+            ctx.fillStyle = '#666';
+            ctx.font = '16px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data to display. Complete some words first!', W / 2, H / 2);
+            return;
+        }
+
+        // Determine axis ranges
+        const xValues = scatterDots.map(d => d.x);
+        const yValues = scatterDots.map(d => d.y);
+        const xMin = Math.max(0, Math.min(...xValues) - 1);
+        const xMax = Math.max(...xValues) + 1;
+        const yMin = 0;
+        const yMax = Math.max(...yValues) * 1.1;
+
+        function toPixelX(val) {
+            return pad.left + ((val - xMin) / (xMax - xMin)) * plotW;
+        }
+        function toPixelY(val) {
+            return pad.top + plotH - ((val - yMin) / (yMax - yMin)) * plotH;
+        }
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+
+        // X grid
+        const xStep = Math.max(1, Math.ceil((xMax - xMin) / 10));
+        for (let v = Math.ceil(xMin); v <= xMax; v += xStep) {
+            const px = toPixelX(v);
+            ctx.beginPath();
+            ctx.moveTo(px, pad.top);
+            ctx.lineTo(px, pad.top + plotH);
+            ctx.stroke();
+        }
+
+        // Y grid
+        const yRange = yMax - yMin;
+        const yStep = yRange > 0 ? Math.pow(10, Math.floor(Math.log10(yRange / 5))) * Math.ceil((yRange / 5) / Math.pow(10, Math.floor(Math.log10(yRange / 5)))) : 50;
+        for (let v = 0; v <= yMax; v += yStep) {
+            const py = toPixelY(v);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, py);
+            ctx.lineTo(pad.left + plotW, py);
+            ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 2;
+        // X axis
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top + plotH);
+        ctx.lineTo(pad.left + plotW, pad.top + plotH);
+        ctx.stroke();
+        // Y axis
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top);
+        ctx.lineTo(pad.left, pad.top + plotH);
+        ctx.stroke();
+
+        // Axis labels
+        ctx.fillStyle = '#aaa';
+        ctx.font = '12px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+
+        // X tick labels
+        for (let v = Math.ceil(xMin); v <= xMax; v += xStep) {
+            const px = toPixelX(v);
+            ctx.fillText(v, px, pad.top + plotH + 20);
+        }
+
+        // Y tick labels
+        ctx.textAlign = 'right';
+        for (let v = 0; v <= yMax; v += yStep) {
+            const py = toPixelY(v);
+            const label = v < 1000 ? v.toFixed(0) : (v / 1000).toFixed(1) + 'k';
+            ctx.fillText(label, pad.left - 8, py + 4);
+        }
+
+        // Axis titles
+        ctx.fillStyle = '#888';
+        ctx.font = '13px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Characters in Word', pad.left + plotW / 2, H - 8);
+        ctx.save();
+        ctx.translate(16, pad.top + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('ms / character', 0, 0);
+        ctx.restore();
+
+        // Line/curve of best fit
+        if (scatterDots.length >= 2) {
+            const n = scatterDots.length;
+            const meanY = scatterDots.reduce((s, d) => s + d.y, 0) / n;
+            let ssTot = 0;
+            scatterDots.forEach(d => ssTot += (d.y - meanY) * (d.y - meanY));
+
+            let predictFn, eqStr;
+
+            if (regressionType === 'quadratic' && n >= 3) {
+                // Quadratic regression: y = ax² + bx + c
+                // Solve via normal equations: [sumX4 sumX3 sumX2; sumX3 sumX2 sumX; sumX2 sumX n] * [a;b;c] = [sumX2Y; sumXY; sumY]
+                let sX = 0, sX2 = 0, sX3 = 0, sX4 = 0, sY = 0, sXY = 0, sX2Y = 0;
+                scatterDots.forEach(d => {
+                    const x = d.x, y = d.y;
+                    sX += x; sX2 += x*x; sX3 += x*x*x; sX4 += x*x*x*x;
+                    sY += y; sXY += x*y; sX2Y += x*x*y;
+                });
+                // Cramer's rule for 3x3
+                const M = [[sX4,sX3,sX2],[sX3,sX2,sX],[sX2,sX,n]];
+                const R = [sX2Y, sXY, sY];
+                const det3 = (m) => m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+                const D = det3(M);
+                if (Math.abs(D) > 0.0001) {
+                    const rep = (col, r) => M.map((row, i) => row.map((v, j) => j === col ? r[i] : v));
+                    const a = det3(rep(0, R)) / D;
+                    const b = det3(rep(1, R)) / D;
+                    const c = det3(rep(2, R)) / D;
+                    predictFn = (x) => a*x*x + b*x + c;
+
+                    const aStr = a.toFixed(2);
+                    const bPart = b >= 0 ? ' + ' + b.toFixed(1) + 'x' : ' - ' + Math.abs(b).toFixed(1) + 'x';
+                    const cPart = c >= 0 ? ' + ' + c.toFixed(1) : ' - ' + Math.abs(c).toFixed(1);
+                    eqStr = 'y = ' + aStr + 'x\u00B2' + bPart + cPart;
+                }
+            }
+
+            if (!predictFn) {
+                // Linear regression: y = mx + b
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                scatterDots.forEach(d => { sumX += d.x; sumY += d.y; sumXY += d.x * d.y; sumX2 += d.x * d.x; });
+                const denom = n * sumX2 - sumX * sumX;
+                if (Math.abs(denom) > 0.0001) {
+                    const slope = (n * sumXY - sumX * sumY) / denom;
+                    const intercept = (sumY - slope * sumX) / n;
+                    predictFn = (x) => slope * x + intercept;
+                    const intStr = intercept >= 0 ? ' + ' + intercept.toFixed(1) : ' - ' + Math.abs(intercept).toFixed(1);
+                    eqStr = 'y = ' + slope.toFixed(1) + 'x' + intStr;
+                }
+            }
+
+            if (predictFn) {
+                // Draw the fit line/curve
+                ctx.save();
+                ctx.setLineDash([6, 6]);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                const steps = 100;
+                for (let i = 0; i <= steps; i++) {
+                    const xVal = xMin + (xMax - xMin) * (i / steps);
+                    const yVal = predictFn(xVal);
+                    const px = toPixelX(xVal);
+                    const py = toPixelY(yVal);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                ctx.restore();
+
+                // R² value
+                let ssRes = 0;
+                scatterDots.forEach(d => {
+                    const predicted = predictFn(d.x);
+                    ssRes += (d.y - predicted) * (d.y - predicted);
+                });
+                const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+
+                document.getElementById('equation-text').textContent = eqStr;
+                document.getElementById('equation-r2').textContent = 'R\u00B2 = ' + r2.toFixed(4);
+            }
+        }
+
+        // Total best time of visible words
+        let totalMs = 0;
+        scatterDots.forEach(d => {
+            const key = d.word.toLowerCase();
+            if (bestTimes[key]) totalMs += bestTimes[key];
+        });
+        document.getElementById('total-time-value').textContent = formatTimeMinSec(totalMs);
+
+        // Transition total
+        const transMs = parseInt(document.getElementById('transition-time-input').value) || 0;
+        const wordCount = scatterDots.length;
+        const transTotal = totalMs + (Math.max(0, wordCount - 1) * transMs);
+        document.getElementById('transition-total-value').textContent = formatTimeMinSec(transTotal);
+
+        // Draw dots and store pixel coords
+        scatterDots.forEach(dot => {
+            dot.px = toPixelX(dot.x);
+            dot.py = toPixelY(dot.y);
+            ctx.beginPath();
+            ctx.arc(dot.px, dot.py, 5, 0, Math.PI * 2);
+            ctx.fillStyle = dot.color;
+            ctx.fill();
+        });
+
+        // Draw hovered dot tooltip
+        if (hoveredDot !== null && hoveredDot < scatterDots.length) {
+            const dot = scatterDots[hoveredDot];
+            // Highlight ring
+            ctx.beginPath();
+            ctx.arc(dot.px, dot.py, 8, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    // Canvas mouse interaction
+    (function() {
+        const canvas = document.getElementById('stats-canvas');
+        const tooltip = document.getElementById('canvas-tooltip');
+
+        canvas.addEventListener('mousemove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            let closest = -1;
+            let closestDist = Infinity;
+            scatterDots.forEach((dot, i) => {
+                const dist = Math.hypot(dot.px - mx, dot.py - my);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = i;
+                }
+            });
+
+            if (closest >= 0 && closestDist < 20) {
+                hoveredDot = closest;
+                const dot = scatterDots[closest];
+                tooltip.textContent = dot.word + ' (' + dot.y.toFixed(0) + 'ms/ch)';
+                // Position tooltip in CSS pixels relative to wrapper
+                const cssX = (dot.px / canvas.width) * rect.width;
+                const cssY = (dot.py / canvas.height) * rect.height;
+                tooltip.style.left = (cssX + 12) + 'px';
+                tooltip.style.top = (cssY - 10) + 'px';
+                tooltip.style.display = 'block';
+                canvas.style.cursor = 'pointer';
+            } else {
+                hoveredDot = null;
+                tooltip.style.display = 'none';
+                canvas.style.cursor = 'default';
+            }
+            drawScatterPlot();
+        });
+
+        canvas.addEventListener('mouseleave', function() {
+            hoveredDot = null;
+            tooltip.style.display = 'none';
+            canvas.style.cursor = 'default';
+            drawScatterPlot();
+        });
+
+        canvas.addEventListener('click', function() {
+            if (hoveredDot !== null && hoveredDot < scatterDots.length) {
+                const dot = scatterDots[hoveredDot];
+                hoveredDot = null;
+                tooltip.style.display = 'none';
+                trainSpecificWord(dot.wordIndex);
+            }
+        });
+    })();
+
+    // ============ SECOND SCATTER PLOT (Total Time) ============
+    let regressionType2 = 'linear';
+    let scatterDots2 = [];
+    let hoveredDot2 = null;
+
+    function setRegressionType2(type) {
+        regressionType2 = type;
+        document.getElementById('fit-linear-btn-2').classList.toggle('active', type === 'linear');
+        document.getElementById('fit-quad-btn-2').classList.toggle('active', type === 'quadratic');
+        drawScatterPlot2();
+    }
+
+    function drawScatterPlot2() {
+        const canvas = document.getElementById('stats-canvas-2');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        const pad = { top: 30, right: 30, bottom: 50, left: 70 };
+        const plotW = W - pad.left - pad.right;
+        const plotH = H - pad.top - pad.bottom;
+
+        ctx.fillStyle = '#0f1524';
+        ctx.fillRect(0, 0, W, H);
+
+        // Gather data - same filtering as graph 1 but y = total best time
+        scatterDots2 = [];
+        const showAll = statsActiveToggles.has('all');
+
+        words.forEach((word, i) => {
+            const key = word.toLowerCase();
+            if (!bestTimes[key]) return;
+            const charCount = word.length;
+            const totalTime = bestTimes[key];
+            const listIndices = getWordListIndices(i);
+
+            let color = null, show = false;
+            if (showAll) {
+                show = true;
+                color = listIndices.length > 0 ? LIST_COLORS[listIndices[0] % LIST_COLORS.length] : '#ffffff';
+            } else {
+                for (const li of listIndices) {
+                    if (statsActiveToggles.has(li)) {
+                        show = true;
+                        color = LIST_COLORS[li % LIST_COLORS.length];
+                        break;
+                    }
+                }
+            }
+            if (show) {
+                scatterDots2.push({ x: charCount, y: totalTime, word: word, wordIndex: i, color: color });
+            }
+        });
+
+        if (scatterDots2.length === 0) {
+            ctx.fillStyle = '#666';
+            ctx.font = '16px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data to display.', W / 2, H / 2);
+            return;
+        }
+
+        const xValues = scatterDots2.map(d => d.x);
+        const yValues = scatterDots2.map(d => d.y);
+        const xMin = Math.max(0, Math.min(...xValues) - 1);
+        const xMax = Math.max(...xValues) + 1;
+        const yMin = 0;
+        const yMax = Math.max(...yValues) * 1.1;
+
+        function toPixelX(val) { return pad.left + ((val - xMin) / (xMax - xMin)) * plotW; }
+        function toPixelY(val) { return pad.top + plotH - ((val - yMin) / (yMax - yMin)) * plotH; }
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        const xStep = Math.max(1, Math.ceil((xMax - xMin) / 10));
+        for (let v = Math.ceil(xMin); v <= xMax; v += xStep) {
+            const px = toPixelX(v);
+            ctx.beginPath(); ctx.moveTo(px, pad.top); ctx.lineTo(px, pad.top + plotH); ctx.stroke();
+        }
+        const yRange = yMax - yMin;
+        const yStep = yRange > 0 ? Math.pow(10, Math.floor(Math.log10(yRange / 5))) * Math.ceil((yRange / 5) / Math.pow(10, Math.floor(Math.log10(yRange / 5)))) : 50;
+        for (let v = 0; v <= yMax; v += yStep) {
+            const py = toPixelY(v);
+            ctx.beginPath(); ctx.moveTo(pad.left, py); ctx.lineTo(pad.left + plotW, py); ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(pad.left, pad.top + plotH); ctx.lineTo(pad.left + plotW, pad.top + plotH); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + plotH); ctx.stroke();
+
+        // Tick labels
+        ctx.fillStyle = '#aaa';
+        ctx.font = '12px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        for (let v = Math.ceil(xMin); v <= xMax; v += xStep) {
+            ctx.fillText(v, toPixelX(v), pad.top + plotH + 20);
+        }
+        ctx.textAlign = 'right';
+        for (let v = 0; v <= yMax; v += yStep) {
+            const label = v < 1000 ? v.toFixed(0) : (v / 1000).toFixed(1) + 'k';
+            ctx.fillText(label, pad.left - 8, toPixelY(v) + 4);
+        }
+
+        // Axis titles
+        ctx.fillStyle = '#888';
+        ctx.font = '13px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Characters in Word', pad.left + plotW / 2, H - 8);
+        ctx.save();
+        ctx.translate(16, pad.top + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Total Time (ms)', 0, 0);
+        ctx.restore();
+
+        // Regression
+        if (scatterDots2.length >= 2) {
+            const n = scatterDots2.length;
+            const meanY = scatterDots2.reduce((s, d) => s + d.y, 0) / n;
+            let ssTot = 0;
+            scatterDots2.forEach(d => ssTot += (d.y - meanY) * (d.y - meanY));
+
+            let predictFn, eqStr;
+
+            if (regressionType2 === 'quadratic' && n >= 3) {
+                let sX = 0, sX2 = 0, sX3 = 0, sX4 = 0, sY = 0, sXY = 0, sX2Y = 0;
+                scatterDots2.forEach(d => {
+                    const x = d.x, y = d.y;
+                    sX += x; sX2 += x*x; sX3 += x*x*x; sX4 += x*x*x*x;
+                    sY += y; sXY += x*y; sX2Y += x*x*y;
+                });
+                const M = [[sX4,sX3,sX2],[sX3,sX2,sX],[sX2,sX,n]];
+                const R = [sX2Y, sXY, sY];
+                const det3 = (m) => m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+                const D = det3(M);
+                if (Math.abs(D) > 0.0001) {
+                    const rep = (col, r) => M.map((row, i) => row.map((v, j) => j === col ? r[i] : v));
+                    const a = det3(rep(0, R)) / D;
+                    const b = det3(rep(1, R)) / D;
+                    const c = det3(rep(2, R)) / D;
+                    predictFn = (x) => a*x*x + b*x + c;
+                    const bPart = b >= 0 ? ' + ' + b.toFixed(1) + 'x' : ' - ' + Math.abs(b).toFixed(1) + 'x';
+                    const cPart = c >= 0 ? ' + ' + c.toFixed(1) : ' - ' + Math.abs(c).toFixed(1);
+                    eqStr = 'y = ' + a.toFixed(2) + 'x\u00B2' + bPart + cPart;
+                }
+            }
+
+            if (!predictFn) {
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                scatterDots2.forEach(d => { sumX += d.x; sumY += d.y; sumXY += d.x * d.y; sumX2 += d.x * d.x; });
+                const denom = n * sumX2 - sumX * sumX;
+                if (Math.abs(denom) > 0.0001) {
+                    const slope = (n * sumXY - sumX * sumY) / denom;
+                    const intercept = (sumY - slope * sumX) / n;
+                    predictFn = (x) => slope * x + intercept;
+                    const intStr = intercept >= 0 ? ' + ' + intercept.toFixed(1) : ' - ' + Math.abs(intercept).toFixed(1);
+                    eqStr = 'y = ' + slope.toFixed(1) + 'x' + intStr;
+                }
+            }
+
+            if (predictFn) {
+                ctx.save();
+                ctx.setLineDash([6, 6]);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const xVal = xMin + (xMax - xMin) * (i / 100);
+                    const px = toPixelX(xVal), py = toPixelY(predictFn(xVal));
+                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                ctx.restore();
+
+                let ssRes = 0;
+                scatterDots2.forEach(d => { const p = predictFn(d.x); ssRes += (d.y - p) * (d.y - p); });
+                const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+                document.getElementById('equation-text-2').textContent = eqStr;
+                document.getElementById('equation-r2-2').textContent = 'R\u00B2 = ' + r2.toFixed(4);
+            }
+        }
+
+        // Dots
+        scatterDots2.forEach(dot => {
+            dot.px = toPixelX(dot.x);
+            dot.py = toPixelY(dot.y);
+            ctx.beginPath();
+            ctx.arc(dot.px, dot.py, 5, 0, Math.PI * 2);
+            ctx.fillStyle = dot.color;
+            ctx.fill();
+        });
+
+        // Hover highlight
+        if (hoveredDot2 !== null && hoveredDot2 < scatterDots2.length) {
+            const dot = scatterDots2[hoveredDot2];
+            ctx.beginPath();
+            ctx.arc(dot.px, dot.py, 8, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    // Canvas 2 mouse interaction
+    (function() {
+        const canvas = document.getElementById('stats-canvas-2');
+        const tooltip = document.getElementById('canvas-tooltip-2');
+
+        canvas.addEventListener('mousemove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            let closest = -1, closestDist = Infinity;
+            scatterDots2.forEach((dot, i) => {
+                const dist = Math.hypot(dot.px - mx, dot.py - my);
+                if (dist < closestDist) { closestDist = dist; closest = i; }
+            });
+
+            if (closest >= 0 && closestDist < 20) {
+                hoveredDot2 = closest;
+                const dot = scatterDots2[closest];
+                tooltip.textContent = dot.word + ' (' + formatTime(dot.y) + ')';
+                const cssX = (dot.px / canvas.width) * rect.width;
+                const cssY = (dot.py / canvas.height) * rect.height;
+                tooltip.style.left = (cssX + 12) + 'px';
+                tooltip.style.top = (cssY - 10) + 'px';
+                tooltip.style.display = 'block';
+                canvas.style.cursor = 'pointer';
+            } else {
+                hoveredDot2 = null;
+                tooltip.style.display = 'none';
+                canvas.style.cursor = 'default';
+            }
+            drawScatterPlot2();
+        });
+
+        canvas.addEventListener('mouseleave', function() {
+            hoveredDot2 = null;
+            tooltip.style.display = 'none';
+            canvas.style.cursor = 'default';
+            drawScatterPlot2();
+        });
+
+        canvas.addEventListener('click', function() {
+            if (hoveredDot2 !== null && hoveredDot2 < scatterDots2.length) {
+                const dot = scatterDots2[hoveredDot2];
+                hoveredDot2 = null;
+                tooltip.style.display = 'none';
+                trainSpecificWord(dot.wordIndex);
+            }
+        });
+    })();
+
+    // Global Tab handler
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Tab') return;
+        // Stats screen: Tab goes back to menu
+        if (document.getElementById('stats-screen').classList.contains('active')) {
+            e.preventDefault();
+            showScreen('menu-screen');
+            return;
+        }
+        // Training screen: handle Tab globally in case input isn't focused
+        if (document.getElementById('training-screen').classList.contains('active')) {
+            e.preventDefault();
+            if (trainLocked) return;
+            if (cameFromStats) {
+                cameFromStats = false;
+                showStats();
+            } else if (trainIndex > 0) {
+                trainIndex--;
+                trainStartTime = null;
+                const input = document.getElementById('typing-input');
+                input.value = '';
+                input.className = '';
+                document.getElementById('train-last-time').textContent = '--';
+                document.getElementById('train-last-perchar').textContent = '';
+                updateTrainDisplay();
+                input.focus();
+            }
+            return;
+        }
+    });
+
+    // ============ INIT ============
+    migrateOldData();
+    // Auto-login last user, or show user select
+    const lastUser = localStorage.getItem('wordSpeedTrainer_lastUser');
+    const existingUsers = getUsers();
+    if (lastUser && existingUsers.includes(lastUser)) {
+        loginUser(lastUser);
+    } else {
+        renderUserList();
+    }
+    // Allow Enter to create user on the select screen
+    document.getElementById('new-user-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') createUser();
+    });
+</script>
+
+</body>
+</html>
