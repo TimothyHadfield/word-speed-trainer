@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Speed Trainer</title>
+    <meta name="description" content="A speed-typing drill for a word list: times every word, keeps your best, and graphs where you're slow.">
+    <link rel="icon" href="data:,">
     <style>
         * {
             margin: 0;
@@ -897,7 +899,7 @@
     <h2 style="margin-bottom:10px">Select User</h2>
     <div id="user-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;width:100%;max-width:350px"></div>
     <div style="display:flex;gap:10px;align-items:center;width:100%;max-width:350px">
-        <input type="text" id="new-user-input" placeholder="New user name..." style="flex:1;padding:10px 14px;font-size:1rem;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;outline:none">
+        <input type="text" id="new-user-input" aria-label="New user name" placeholder="New user name..." style="flex:1;padding:10px 14px;font-size:1rem;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;outline:none">
         <button class="btn-primary" onclick="createUser()" style="padding:10px 20px">Create</button>
     </div>
 </div>
@@ -920,7 +922,7 @@
 <div id="set-words-screen" class="screen">
     <h2>Set Words</h2>
     <p class="word-hint">Enter one word per line</p>
-    <textarea id="words-textarea" placeholder="Type your words here, one per line...&#10;&#10;Example:&#10;France&#10;Germany&#10;Spain&#10;Portugal"></textarea>
+    <textarea id="words-textarea" aria-label="Words, one per line" placeholder="Type your words here, one per line...&#10;&#10;Example:&#10;France&#10;Germany&#10;Spain&#10;Portugal"></textarea>
     <div class="save-row">
         <button class="btn-primary" onclick="saveWords()">Save</button>
         <button class="btn-back" onclick="showScreen('menu-screen')">Back</button>
@@ -936,7 +938,7 @@
     <div class="current-word-display" id="train-current-word"></div>
     <div class="next-word-display" id="train-next-word"></div>
     <div class="input-wrapper">
-        <input type="text" id="typing-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
+        <input type="text" id="typing-input" aria-label="Type the word" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
     </div>
     <div class="stats-row">
         <div class="stat-box">
@@ -973,7 +975,7 @@
         <div class="selection-info" id="selection-info"></div>
 
         <div class="save-list-row">
-            <input type="text" id="list-name-input" placeholder="List name..." autocomplete="off">
+            <input type="text" id="list-name-input" aria-label="List name" placeholder="List name..." autocomplete="off">
             <button class="btn-secondary" onclick="saveCurrentList()">Save List</button>
         </div>
 
@@ -983,7 +985,7 @@
     <div id="autoplay-active" style="display:none; flex-direction:column; align-items:center;">
         <div class="autoplay-word-display" id="autoplay-current-word"></div>
         <div class="autoplay-next-word" id="autoplay-next-word"></div>
-        <input type="text" id="autoplay-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
+        <input type="text" id="autoplay-input" aria-label="Type the word" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
         <div class="autoplay-stats">
             <div class="stat-box">
                 <div class="stat-label">Word Time</div>
@@ -1039,7 +1041,7 @@
             <div class="equation-box">
                 <div class="total-time-label">Transitions</div>
                 <div class="transition-row">
-                    <input type="number" id="transition-time-input" value="300" min="0" step="50" oninput="updateTransitionTime()">
+                    <input type="number" id="transition-time-input" aria-label="Transition time in milliseconds" value="300" min="0" step="50" oninput="updateTransitionTime()">
                     <span class="transition-unit">ms</span>
                 </div>
                 <div class="total-time-value" id="transition-total-value" style="margin-top:8px">--</div>
@@ -1065,13 +1067,13 @@
 </div>
 
 <!-- Settings -->
-<button class="settings-gear" onclick="toggleSettings()">&#9881;</button>
+<button class="settings-gear" aria-label="Settings" onclick="toggleSettings()">&#9881;</button>
 <div class="settings-overlay" id="settings-overlay" onclick="toggleSettings()"></div>
 <div class="settings-bar" id="settings-bar">
-    <button class="settings-close" onclick="toggleSettings()">&times;</button>
+    <button class="settings-close" aria-label="Close settings" onclick="toggleSettings()">&times;</button>
     <h2>Settings</h2>
     <div class="setting-group">
-        <label>Error Delay</label>
+        <label for="error-delay-slider">Error Delay</label>
         <div class="setting-row">
             <input type="range" id="error-delay-slider" min="0" max="5000" step="100" value="1000" oninput="updateErrorDelay(this.value)">
             <span class="setting-val" id="error-delay-val">1.0s</span>
@@ -1095,6 +1097,7 @@
     let trainIndex = 0;
     let trainStartTime = null;
     let trainLocked = false;
+    let trainTimer = null; // pending clear-input timeout (error or success)
 
     // Autoplay state
     let autoPlayWords = [];
@@ -1102,6 +1105,7 @@
     let autoPlayStartTime = null;      // per-word
     let autoPlayGlobalStart = null;    // total run
     let autoPlayLocked = false;
+    let autoPlayTimer = null; // pending error-reset timeout
     let autoPlayRunning = false;
     let autoPlayRangeStart = 0;
     let autoPlayRangeEnd = 0;
@@ -1323,6 +1327,7 @@
         cameFromStats = false;
         trainIndex = 0;
         trainStartTime = null;
+        clearTimeout(trainTimer);
         trainLocked = false;
         showScreen('training-screen');
         updateTrainDisplay();
@@ -1338,6 +1343,7 @@
         const counterEl = document.getElementById('train-word-counter');
 
         wordEl.textContent = words[trainIndex];
+        fitWordDisplay(wordEl);
         if (trainIndex + 1 < words.length) {
             nextEl.innerHTML = 'Next: <span>' + escapeHtml(words[trainIndex + 1]) + '</span>';
         } else {
@@ -1405,7 +1411,7 @@
             // Wrong letter
             trainLocked = true;
             this.className = 'error';
-            setTimeout(() => {
+            trainTimer = setTimeout(() => {
                 this.value = '';
                 this.className = '';
                 trainStartTime = null;
@@ -1434,7 +1440,7 @@
             document.getElementById('train-best-time').textContent = formatTime(bestTimes[key]);
             document.getElementById('train-best-perchar').textContent = formatPerChar(bestTimes[key], target);
 
-            setTimeout(() => {
+            trainTimer = setTimeout(() => {
                 this.value = '';
                 this.className = '';
                 trainStartTime = null;
@@ -1449,6 +1455,7 @@
     let selEnd = -1;
     let isDragging = false;
     let dragAnchor = -1;
+    let wordListListenersAttached = false;
 
     function startAutoPlaySetup() {
         if (words.length === 0) {
@@ -1551,6 +1558,10 @@
 
         updateWordListSelection();
 
+        // Attach the drag listeners only once (the container is reused on every visit)
+        if (wordListListenersAttached) return;
+        wordListListenersAttached = true;
+
         // Mouse events for drag selection
         container.addEventListener('mousedown', function(e) {
             const item = e.target.closest('.word-list-item');
@@ -1637,6 +1648,7 @@
         autoPlayIndex = 0;
         autoPlayStartTime = null;
         autoPlayGlobalStart = null;
+        clearTimeout(autoPlayTimer);
         autoPlayLocked = false;
         autoPlayRunning = true;
 
@@ -1662,6 +1674,7 @@
         const progEl = document.getElementById('autoplay-progress');
 
         wordEl.textContent = autoPlayWords[autoPlayIndex];
+        fitWordDisplay(wordEl);
         if (autoPlayIndex + 1 < autoPlayWords.length) {
             nextEl.innerHTML = 'Next: <span>' + escapeHtml(autoPlayWords[autoPlayIndex + 1]) + '</span>';
         } else {
@@ -1711,7 +1724,7 @@
             // Wrong letter - red for 2 seconds, reset
             autoPlayLocked = true;
             this.className = 'error';
-            setTimeout(() => {
+            autoPlayTimer = setTimeout(() => {
                 this.value = '';
                 this.className = '';
                 autoPlayStartTime = null; // reset per-word timer
@@ -1854,6 +1867,17 @@
         return (perChar / 1000).toFixed(2) + 's/ch';
     }
 
+    // Shrink the big word only when a single long word would be cut off at the screen edges
+    // (e.g. on a phone); words that fit keep the normal size.
+    function fitWordDisplay(el) {
+        el.style.fontSize = '';
+        const avail = el.closest('.screen').clientWidth - 16;
+        const w = el.scrollWidth;
+        if (avail > 0 && w > avail) {
+            el.style.fontSize = Math.floor(parseFloat(getComputedStyle(el).fontSize) * avail / w) + 'px';
+        }
+    }
+
     function escapeHtml(str) {
         const div = document.createElement('div');
         div.textContent = str;
@@ -1880,6 +1904,7 @@
         cameFromStats = true;
         trainIndex = index;
         trainStartTime = null;
+        clearTimeout(trainTimer);
         trainLocked = false;
         showScreen('training-screen');
         updateTrainDisplay();
@@ -1994,6 +2019,12 @@
         // Clear
         ctx.fillStyle = '#0f1524';
         ctx.fillRect(0, 0, W, H);
+
+        // Reset side-panel numbers so a filter with too little data doesn't show the previous filter's values
+        document.getElementById('equation-text').textContent = 'y = 0x + 0';
+        document.getElementById('equation-r2').textContent = 'R² = 0';
+        document.getElementById('total-time-value').textContent = '--';
+        document.getElementById('transition-total-value').textContent = '--';
 
         // Gather data points
         scatterDots = [];
@@ -2330,6 +2361,9 @@
 
         ctx.fillStyle = '#0f1524';
         ctx.fillRect(0, 0, W, H);
+
+        document.getElementById('equation-text-2').textContent = 'y = 0x + 0';
+        document.getElementById('equation-r2-2').textContent = 'R² = 0';
 
         // Gather data - same filtering as graph 1 but y = total best time
         scatterDots2 = [];
