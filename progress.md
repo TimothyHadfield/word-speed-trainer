@@ -32,6 +32,9 @@ None.
   longer pile up on each visit; very long words no longer cut off at phone width; added aria-labels,
   meta description and an empty favicon (no visual change). Report:
   `laptop-ops/coding-and-claude/reports/sweep-2026-10-16/word-speed-trainer.md`.
+- 2026-10-17: the 7 browser alert/confirm/prompt pop-ups are now an in-app dialog (`appAlert/appConfirm/appPrompt`
+  in country_training.html); while it's open a capture-phase key listener swallows all keys, so Enter/Tab/typing
+  never reach the trainer, and focus returns to where it was on close.
 
 ## NOT verified
 - On Tim's real iPhone (only Safari's engine at iPhone size via phone-view).

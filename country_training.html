@@ -889,6 +889,61 @@
             font-size: 0.75rem;
             margin-left: 4px;
         }
+        /* In-app dialog (replaces browser alert/confirm/prompt) */
+        .app-dialog-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .app-dialog-overlay.open {
+            display: flex;
+        }
+
+        .app-dialog-box {
+            width: 100%;
+            max-width: 380px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 22px 20px 18px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .app-dialog-msg {
+            font-size: 1.05rem;
+            line-height: 1.4;
+            margin-bottom: 16px;
+            overflow-wrap: anywhere;
+        }
+
+        .app-dialog-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+            margin-bottom: 16px;
+        }
+
+        .app-dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .app-dialog-buttons button {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -1081,7 +1136,109 @@
     </div>
 </div>
 
+<div class="app-dialog-overlay" id="app-dialog" role="dialog" aria-modal="true" aria-labelledby="app-dialog-msg">
+    <div class="app-dialog-box">
+        <div class="app-dialog-msg" id="app-dialog-msg"></div>
+        <input type="text" class="app-dialog-input" id="app-dialog-input" aria-label="Value" autocomplete="off">
+        <div class="app-dialog-buttons">
+            <button class="btn-back" id="app-dialog-cancel">Cancel</button>
+            <button class="btn-primary" id="app-dialog-ok">OK</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // ============ IN-APP DIALOGS (alert / confirm / prompt) ============
+    // While open, a capture-phase key listener swallows every key so the app's own
+    // Enter/Tab/typing handlers never fire; focus goes back where it was on close.
+    const appDialog = (function() {
+        const overlay = document.getElementById('app-dialog');
+        const msgEl = document.getElementById('app-dialog-msg');
+        const inputEl = document.getElementById('app-dialog-input');
+        const okBtn = document.getElementById('app-dialog-ok');
+        const cancelBtn = document.getElementById('app-dialog-cancel');
+        let current = null; // { kind, resolve, returnFocus }
+
+        function close(ok) {
+            if (!current) return;
+            const c = current;
+            current = null;
+            overlay.classList.remove('open');
+            let result;
+            if (c.kind === 'prompt') result = ok ? inputEl.value : null;
+            else if (c.kind === 'confirm') result = !!ok;
+            if (c.returnFocus && document.contains(c.returnFocus) && typeof c.returnFocus.focus === 'function') {
+                c.returnFocus.focus();
+            }
+            c.resolve(result);
+        }
+
+        function open(kind, message, defaultValue) {
+            if (current) close(false);
+            return new Promise(function(resolve) {
+                current = { kind: kind, resolve: resolve, returnFocus: document.activeElement };
+                msgEl.textContent = message;
+                inputEl.style.display = kind === 'prompt' ? '' : 'none';
+                cancelBtn.style.display = kind === 'alert' ? 'none' : '';
+                inputEl.value = kind === 'prompt' ? (defaultValue == null ? '' : String(defaultValue)) : '';
+                overlay.classList.add('open');
+                if (kind === 'prompt') { inputEl.focus(); inputEl.select(); }
+                else okBtn.focus();
+            });
+        }
+
+        okBtn.addEventListener('click', function() { close(true); });
+        cancelBtn.addEventListener('click', function() { close(false); });
+        overlay.addEventListener('mousedown', function(e) {
+            if (e.target === overlay) { e.preventDefault(); }
+        });
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) close(false);
+        });
+
+        window.addEventListener('keydown', function(e) {
+            if (!current) return;
+            e.stopImmediatePropagation();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.repeat) return;
+                // Enter on the focused Cancel button cancels; anywhere else it's OK
+                close(document.activeElement !== cancelBtn);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                close(false);
+            } else if (e.key === 'Tab') {
+                // Keep focus inside the dialog
+                e.preventDefault();
+                const items = [inputEl, cancelBtn, okBtn].filter(function(el) { return el.style.display !== 'none'; });
+                let i = items.indexOf(document.activeElement);
+                i = e.shiftKey ? (i <= 0 ? items.length - 1 : i - 1) : (i + 1) % items.length;
+                items[i].focus();
+            } else if (!overlay.contains(e.target)) {
+                e.preventDefault();
+            }
+        }, true);
+        // Keyup/keypress must not leak either
+        ['keyup', 'keypress'].forEach(function(t) {
+            window.addEventListener(t, function(e) {
+                if (!current) return;
+                e.stopImmediatePropagation();
+                // The Enter that opened the dialog must not "click" the focused OK button
+                if (e.key === 'Enter') e.preventDefault();
+            }, true);
+        });
+
+        return {
+            alert: function(message) { return open('alert', message); },
+            confirm: function(message) { return open('confirm', message); },
+            prompt: function(message, defaultValue) { return open('prompt', message, defaultValue); },
+            isOpen: function() { return !!current; }
+        };
+    })();
+    const appAlert = appDialog.alert;
+    const appConfirm = appDialog.confirm;
+    const appPrompt = appDialog.prompt;
+
     // ============ STATE ============
     const DEFAULT_WORDS = ["car","prc","fsm","ksa","png","nz","dr","dprk","rok","roc","usa","uae","uk","congo","canada","mexico","guatemala","belize","el salvador","honduras","nicaragua","costa rica","panama","colombia","venezuela","brazil","peru","ecuador","bolivia","paraguay","uraguay","chile","argentina","cuba","jamaica","bahamas","haiti","st lucia","st vincent","st kitts","grenada","dominica","barbados","antigua","trinidad","ireland","iceland","portugal","spain","france","netherlands","belgium","germany","luxemburg","litchtenstein","denmark","poland","belarus","norway","sweden","finland","estonia","latvia","lithuania","ukraine","moldova","romania","greece","macedonia","kosovo","albania","montenegro","serbia","bosnia","croatia","slovenia","slovakia","austria","hungary","czech republic","switzerland","italy","andorra","monaco","malta","cyprus","vatican","san marino"];
     const DEFAULT_SAVED_LISTS = [{"name":"Acronyms","start":0,"end":13},{"name":"America's","start":14,"end":32},{"name":"American islands","start":33,"end":44},{"name":"Europe","start":45,"end":87}];
@@ -1212,7 +1369,7 @@
         if (!name) return;
         const users = getUsers();
         if (users.includes(name)) {
-            alert('User "' + name + '" already exists.');
+            appAlert('User "' + name + '" already exists.');
             return;
         }
         users.push(name);
@@ -1221,8 +1378,8 @@
         loginUser(name);
     }
 
-    function deleteUser(name) {
-        if (!confirm('Delete user "' + name + '" and all their data?')) return;
+    async function deleteUser(name) {
+        if (!(await appConfirm('Delete user "' + name + '" and all their data?'))) return;
         let users = getUsers();
         users = users.filter(function(u) { return u !== name; });
         saveUsers(users);
@@ -1233,13 +1390,13 @@
         renderUserList();
     }
 
-    function renameUser(oldName) {
-        const newName = prompt('Rename "' + oldName + '" to:', oldName);
+    async function renameUser(oldName) {
+        const newName = await appPrompt('Rename "' + oldName + '" to:', oldName);
         if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
         const trimmed = newName.trim();
         const users = getUsers();
         if (users.includes(trimmed)) {
-            alert('User "' + trimmed + '" already exists.');
+            appAlert('User "' + trimmed + '" already exists.');
             return;
         }
         // Move localStorage data to new key prefix
@@ -1321,7 +1478,7 @@
     // ============ TRAINING MODE ============
     function startTraining() {
         if (words.length === 0) {
-            alert('No words set! Go to "Set Words" first.');
+            appAlert('No words set! Go to "Set Words" first.');
             return;
         }
         cameFromStats = false;
@@ -1459,7 +1616,7 @@
 
     function startAutoPlaySetup() {
         if (words.length === 0) {
-            alert('No words set! Go to "Set Words" first.');
+            appAlert('No words set! Go to "Set Words" first.');
             return;
         }
         showScreen('autoplay-screen');
@@ -1502,7 +1659,7 @@
     function saveCurrentList() {
         const name = document.getElementById('list-name-input').value.trim();
         if (!name) {
-            alert('Enter a name for the list first.');
+            appAlert('Enter a name for the list first.');
             return;
         }
         // Check for duplicate name
