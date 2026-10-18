@@ -9,6 +9,7 @@ Nothing in progress. The app is finished and published; only fixes when Tim asks
 ## Status
 | Area | State |
 |---|---|
+| Site icon (tab + iPhone home screen) | Added 2026-10-17: red lightning bolt on a dark key; `icon.svg` + `apple-touch-icon.png`, linked from both html pages |
 | App (`country_training.html`) | Working, live on GitHub Pages |
 | Showcase README + screenshots | Done (2026-09-27) |
 | Bug sweep | Done 2026-10-16 (see Decisions) |
